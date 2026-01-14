@@ -1,179 +1,1152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Slot Machine - Probability Weighted</title>
-<style>
-  body { 
-    background: #222; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    font-family: 'Segoe UI', sans-serif;
-    color: white;
-  }
-  
-  .scoreboard { margin-top: 20px; font-size: 24px; color: gold; }
-  .status { height: 30px; margin: 10px; font-weight: bold; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Slot Adventure</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8a2be2;
+            --primary-dark: #5a189a;
+            --secondary: #ffd700;
+            --secondary-dark: #ffaa00;
+            --accent: #00d4ff;
+            --dark-bg: #0a0a1a;
+            --darker-bg: #050510;
+            --panel-bg: rgba(20, 20, 40, 0.8);
+            --success: #4ecca3;
+            --danger: #e94560;
+            --text-light: #f8f9fa;
+            --text-muted: #b0b0d0;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            --glow: 0 0 20px rgba(138, 43, 226, 0.5);
+            --border-radius: 16px;
+            --transition: all 0.3s ease;
+        }
 
-  .machine { display: flex; gap: 15px; margin-bottom: 20px; background: #444; padding: 20px; border-radius: 20px; border: 4px solid #666; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-  
-  .reel {
-    width: 100px; 
-    height: 100px; 
-    border: 3px solid #222;
-    background: #000; 
-    overflow: hidden; 
-    position: relative;
-    font-size: 60px;
-    border-radius: 10px;
-  }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  .strip {
-    position: absolute;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 50%, #1a1a2e 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
 
-  .symbol {
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+            z-index: -1;
+        }
 
-  button {
-    padding: 15px 40px;
-    font-size: 24px;
-    cursor: pointer;
-    background: #ff4757;
-    color: white;
-    border: none;
-    font-weight: bold;
-    border-radius: 50px;
-    box-shadow: 0 4px #c0392b;
-    text-transform: uppercase;
-  }
-  button:active { transform: translateY(2px); box-shadow: 0 2px #c0392b; }
-  button:disabled { background: #666; box-shadow: none; cursor: not-allowed; }
-</style>
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            font-size: 2.5rem;
+            color: var(--secondary);
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+        }
+
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: linear-gradient(to right, var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(138, 43, 226, 0.3);
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            display: flex;
+            justify-content: space-between;
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            text-align: center;
+            flex: 1;
+            padding: 0 15px;
+            position: relative;
+        }
+
+        .stat:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 60%;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 2.2rem;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--secondary);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Game Area */
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        /* Slot Machine */
+        .slot-machine {
+            position: relative;
+            background: linear-gradient(145deg, rgba(30, 30, 60, 0.9), rgba(10, 10, 30, 0.9));
+            border-radius: var(--border-radius);
+            padding: 30px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            box-shadow: 
+                0 0 30px rgba(138, 43, 226, 0.3),
+                inset 0 0 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slot-machine::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary), var(--accent), var(--secondary), var(--primary));
+            border-radius: calc(var(--border-radius) + 4px);
+            z-index: -1;
+            animation: borderGlow 3s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .reels-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0 40px;
+            perspective: 1000px;
+        }
+
+        .reel {
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid rgba(138, 43, 226, 0.5);
+            box-shadow: 
+                0 5px 15px rgba(0, 0, 0, 0.7),
+                inset 0 0 15px rgba(138, 43, 226, 0.2);
+            transform-style: preserve-3d;
+        }
+
+        .reel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                rgba(138, 43, 226, 0.1) 0%, 
+                transparent 30%, 
+                transparent 70%, 
+                rgba(138, 43, 226, 0.1) 100%);
+            z-index: 2;
+        }
+
+        .strip {
+            position: absolute;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            top: 0;
+            left: 0;
+            transition: transform 0.1s linear;
+        }
+
+        .symbol {
+            height: 120px;
+            width: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            text-shadow: 0 0 10px currentColor;
+            color: white;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .spin-btn {
+            padding: 18px 80px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 
+                0 8px 20px rgba(138, 43, 226, 0.4),
+                inset 0 2px 5px rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 2px;
+        }
+
+        .spin-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 12px 25px rgba(138, 43, 226, 0.6),
+                inset 0 2px 5px rgba(255, 255, 255, 0.2);
+        }
+
+        .spin-btn:active {
+            transform: translateY(1px);
+            box-shadow: 
+                0 4px 10px rgba(138, 43, 226, 0.4),
+                inset 0 2px 5px rgba(255, 255, 255, 0.2);
+        }
+
+        .spin-btn:disabled {
+            background: linear-gradient(135deg, #444, #333);
+            color: #777;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .spin-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: rotate(30deg);
+            transition: var(--transition);
+        }
+
+        .spin-btn:hover::after {
+            left: 100%;
+        }
+
+        /* Buffs Display */
+        .buffs-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .buff {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(78, 204, 163, 0.15);
+            border: 1px solid rgba(78, 204, 163, 0.3);
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: var(--success);
+            box-shadow: 0 0 15px rgba(78, 204, 163, 0.2);
+        }
+
+        .buff i {
+            font-size: 1.2rem;
+        }
+
+        /* Odds Display */
+        .odds-display {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 800px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .odds-display h3 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .odds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .odds-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+
+        .odds-symbol {
+            font-size: 1.8rem;
+        }
+
+        .odds-percentage {
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+        }
+
+        /* Shop Overlay */
+        .shop-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 16, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .shop-container {
+            background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(10, 10, 30, 0.95));
+            border-radius: var(--border-radius);
+            padding: 40px;
+            max-width: 900px;
+            width: 90%;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            box-shadow: 
+                0 0 40px rgba(138, 43, 226, 0.4),
+                inset 0 0 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shop-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .shop-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            background: linear-gradient(to right, var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .shop-score {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--secondary);
+            font-family: 'Orbitron', sans-serif;
+            display: inline-block;
+            padding: 10px 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50px;
+            border: 2px solid var(--secondary);
+        }
+
+        .shop-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        .item-card {
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 25px rgba(0, 212, 255, 0.2);
+        }
+
+        .item-card.owned {
+            border-color: var(--success);
+            background: rgba(78, 204, 163, 0.1);
+        }
+
+        .item-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .item-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+
+        .item-desc {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .item-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .buy-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .buy-btn:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .buy-btn:disabled, .buy-btn.owned {
+            background: linear-gradient(135deg, #333, #222);
+            color: #777;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .buy-btn.owned {
+            background: linear-gradient(135deg, var(--success), #3daa87);
+            color: white;
+        }
+
+        .next-round-btn {
+            display: block;
+            margin: 30px auto 0;
+            padding: 18px 50px;
+            background: linear-gradient(135deg, var(--danger), #c2185b);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .next-round-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        /* Win Animation */
+        .win-flash {
+            animation: winFlash 0.5s ease 3;
+        }
+
+        @keyframes winFlash {
+            0%, 100% { box-shadow: 0 0 30px rgba(138, 43, 226, 0.3); }
+            50% { box-shadow: 0 0 50px rgba(255, 215, 0, 0.7); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .stats-panel {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .stat:not(:last-child)::after {
+                display: none;
+            }
+            
+            .reels-container {
+                gap: 10px;
+            }
+            
+            .reel {
+                width: 90px;
+                height: 90px;
+            }
+            
+            .symbol {
+                height: 90px;
+                width: 90px;
+                font-size: 2.5rem;
+            }
+            
+            .spin-btn {
+                padding: 15px 50px;
+                font-size: 1.2rem;
+            }
+            
+            .shop-items {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo-text {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 30px;
+        }
+
+        .cheat-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+    </style>
 </head>
 <body>
-
-<div class="scoreboard">Points: <span id="total-score">0</span></div>
-<div class="status" id="status-msg">Try your luck!</div>
-
-<div class="machine">
-  <div class="reel"><div class="strip" id="r1"></div></div>
-  <div class="reel"><div class="strip" id="r2"></div></div>
-  <div class="reel"><div class="strip" id="r3"></div></div>
-</div>
-
-<button id="spin-btn" onclick="spin()">SPIN</button>
-
-<script>
-// 1. Symbol Configuration
-// We define unique symbols and their scores
-const symbolData = [
-  { img: "🍒", score: 10,  weight: 40 }, // Most common (40% chance)
-  { img: "🍋", score: 20,  weight: 25 }, // 25% chance
-  { img: "🔔", score: 50,  weight: 15 }, // 15% chance
-  { img: "7️⃣", score: 100, weight: 12 }, // 12% chance
-  { img: "⭐", score: 500, weight: 8 }   // Rarest (8% chance)
-];
-
-// Create a flat array of unique symbols for UI generation
-const uniqueSymbols = symbolData.map(s => s.img);
-
-// 2. Setup Reels (Visuals)
-document.querySelectorAll(".strip").forEach(strip => {
-  const content = [];
-  for(let i=0; i<15; i++) content.push(...uniqueSymbols); // Repeat for long scrolling
-  
-  content.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'symbol';
-    div.innerText = s;
-    strip.appendChild(div);
-  });
-});
-
-let totalScore = 0;
-const symbolHeight = 100;
-
-// 3. Weighted Random Function
-function getWeightedRandomSymbol() {
-  // Calculate total weight (100 in this case)
-  const totalWeight = symbolData.reduce((sum, s) => sum + s.weight, 0);
-  let random = Math.random() * totalWeight;
-  
-  for (const s of symbolData) {
-    if (random < s.weight) return s;
-    random -= s.weight;
-  }
-}
-
-function spin() {
-  const spinBtn = document.getElementById('spin-btn');
-  const statusElem = document.getElementById('status-msg');
-  
-  spinBtn.disabled = true;
-  statusElem.innerText = "Spinning...";
-  statusElem.style.color = "white";
-  
-  const results = [];
-
-  document.querySelectorAll(".strip").forEach((strip, i) => {
-    // Reset position instantly
-    strip.style.transition = 'none';
-    strip.style.transform = `translateY(0px)`;
-    strip.offsetHeight; 
-
-    // CHOOSE RESULT BASED ON WEIGHT
-    const selected = getWeightedRandomSymbol();
-    results.push(selected);
-
-    // Find where that symbol lives in the unique list to stop the reel there
-    const landingIndex = uniqueSymbols.indexOf(selected.img);
+    <!-- Background stars -->
+    <div class="stars" id="stars"></div>
     
-    // Animate: (Spin through many sets + land on index)
-    const extraRotations = 10 + (i * 2); 
-    const totalMove = (extraRotations * uniqueSymbols.length + landingIndex) * symbolHeight;
-
-    strip.style.transition = `transform ${3 + i * 0.5}s cubic-bezier(0.15, 0, 0.15, 1)`;
-    strip.style.transform = `translateY(-${totalMove}px)`;
-  });
-
-  // Check results after last reel stops
-  setTimeout(() => {
-    checkWin(results);
-    spinBtn.disabled = false;
-  }, 4000);
-}
-
-function checkWin(results) {
-  const statusElem = document.getElementById('status-msg');
-  const scoreElem = document.getElementById('total-score');
-  
-  const r1 = results[0].img;
-  const r2 = results[1].img;
-  const r3 = results[2].img;
-
-  if (r1 === r2 && r2 === r3) {
-    const winAmount = results[0].score;
-    totalScore += winAmount;
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">🎰</div>
+                <h1 class="logo-text">MAGIC SLOT ADVENTURE</h1>
+            </div>
+            <div class="cheat-hint">
+                <i class="fas fa-key"></i> Cheat: Type "999"
+            </div>
+        </header>
+        
+        <main>
+            <!-- Stats Panel -->
+            <div class="stats-panel">
+                <div class="stat">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value" id="score">100</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Round</span>
+                    <span class="stat-value" id="round">1</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Spins Left</span>
+                    <span class="stat-value" id="spins">10</span>
+                </div>
+            </div>
+            
+            <!-- Game Area -->
+            <div class="game-area">
+                <!-- Odds Display -->
+                <div class="odds-display">
+                    <h3><i class="fas fa-chart-bar"></i> LIVE WIN CHANCES</h3>
+                    <div class="odds-grid" id="odds-display">
+                        <!-- Odds will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Slot Machine -->
+                <div class="slot-machine" id="machine-box">
+                    <div class="reels-container">
+                        <div class="reel">
+                            <div class="strip" id="r1"></div>
+                        </div>
+                        <div class="reel">
+                            <div class="strip" id="r2"></div>
+                        </div>
+                        <div class="reel">
+                            <div class="strip" id="r3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button id="spin-btn" class="spin-btn">
+                            <i class="fas fa-play"></i> SPIN
+                        </button>
+                        
+                        <!-- Buffs Display -->
+                        <div class="buffs-container" id="buffs">
+                            <!-- Buffs will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Magic Slot Adventure &copy; 2023 | Use your points wisely in the Magic Shop!</p>
+        </footer>
+    </div>
     
-    statusElem.innerText = `JACKPOT! ${r1} matched! +${winAmount} pts`;
-    statusElem.style.color = "gold";
-    scoreElem.innerText = totalScore;
-  } else {
-    statusElem.innerText = "No match, try again!";
-    statusElem.style.color = "#888";
-  }
-}
-</script>
+    <!-- Magic Shop Overlay -->
+    <div class="shop-overlay" id="shop">
+        <div class="shop-container">
+            <div class="shop-header">
+                <h1><i class="fas fa-hat-wizard"></i> MAGIC SHOP</h1>
+                <div class="shop-score">Your Points: <span id="shop-score-val">0</span></div>
+            </div>
+            
+            <div class="shop-items">
+                <div class="item-card" id="item-luck">
+                    <div class="item-icon">🍀</div>
+                    <h3 class="item-name">Luck Boost</h3>
+                    <p class="item-desc">Increase your win rate by 25% for the next round.</p>
+                    <div class="item-price">50 PTS</div>
+                    <button id="btn-luck" class="buy-btn" onclick="buyItem('luck', 50)">
+                        PURCHASE
+                    </button>
+                </div>
+                
+                <div class="item-card" id="item-double">
+                    <div class="item-icon">⚡</div>
+                    <h3 class="item-name">Double Score</h3>
+                    <p class="item-desc">All wins are doubled for the next round.</p>
+                    <div class="item-price">100 PTS</div>
+                    <button id="btn-double" class="buy-btn" onclick="buyItem('double', 100)">
+                        PURCHASE
+                    </button>
+                </div>
+                
+                <div class="item-card" id="item-magnet">
+                    <div class="item-icon">💎</div>
+                    <h3 class="item-name">Rare Magnet</h3>
+                    <p class="item-desc">5x chance for rare symbols (7 and Star).</p>
+                    <div class="item-price">150 PTS</div>
+                    <button id="btn-magnet" class="buy-btn" onclick="buyItem('magnet', 150)">
+                        PURCHASE
+                    </button>
+                </div>
+            </div>
+            
+            <button class="next-round-btn" onclick="nextRound()">
+                START NEXT ROUND <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Game variables
+        const symbols = ["🍒", "🍋", "🔔", "7️⃣", "⭐"];
+        const symbolColors = {
+            "🍒": "#e94560",
+            "🍋": "#ffd700",
+            "🔔": "#4ecca3",
+            "7️⃣": "#8a2be2",
+            "⭐": "#00d4ff"
+        };
+        
+        let score = 100;
+        let round = 1;
+        let spinsLeft = 10;
+        let activeItems = { luck: false, double: false, magnet: false };
+        
+        const baseTable = [
+            { id: '🍒', val: 10,  prob: 40, color: "#e94560" }, 
+            { id: '🍋', val: 20,  prob: 10, color: "#ffd700" }, 
+            { id: '🔔', val: 50,  prob: 5,  color: "#4ecca3" }, 
+            { id: '7️⃣', val: 100, prob: 2,  color: "#8a2be2" }, 
+            { id: '⭐', val: 500, prob: 1,  color: "#00d4ff" }, 
+            { id: null, val: 0,   prob: 42, color: "#666" } 
+        ];
+        
+        // Create stars for background
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 5 + 's';
+                star.style.animationDuration = Math.random() * 3 + 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // Initialize the slot reels
+        function initReels() {
+            document.querySelectorAll(".strip").forEach(strip => {
+                strip.innerHTML = '';
+                // Add random symbols for scrolling effect
+                for(let i = 0; i < 20; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'symbol';
+                    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+                    div.innerText = symbol;
+                    div.style.color = symbolColors[symbol] || "#ffffff";
+                    strip.appendChild(div);
+                }
+            });
+        }
+        
+        // Update UI elements
+        function updateUI() {
+    // 1. Update basic stats
+    document.getElementById('score').innerText = score;
+    document.getElementById('round').innerText = round;
+    document.getElementById('spins').innerText = spinsLeft;
 
+    // 2. Prepare the probability table
+    let currentTable = JSON.parse(JSON.stringify(baseTable));
+    
+    if (activeItems.luck) {
+        let lossItem = currentTable.find(i => i.id === null);
+        let reduction = Math.min(lossItem.prob - 5, 25); 
+        lossItem.prob -= reduction;
+        currentTable.find(i => i.id === '🍒').prob += reduction; 
+    }
+    if (activeItems.magnet) {
+        currentTable.find(i => i.id === '7️⃣').prob *= 5;
+        currentTable.find(i => i.id === '⭐').prob *= 5;
+    }
+
+    // 3. Calculate total weight for normalization
+    const totalWeight = currentTable.reduce((sum, item) => sum + item.prob, 0);
+    const oddsContainer = document.getElementById('odds-display');
+    
+    if (!oddsContainer) return; // Safety check
+    oddsContainer.innerHTML = '';
+
+    // 4. Generate the display items
+    currentTable.forEach(item => {
+        const percentage = ((item.prob / totalWeight) * 100).toFixed(1);
+        
+        // Safety check for ID
+        const isLuckBuff = activeItems.luck && item.id === '🍒';
+        const isMagnetBuff = activeItems.magnet && (item.id === '7️⃣' || item.id === '⭐');
+        const isBuffed = isLuckBuff || isMagnetBuff;
+
+        // Display Logic for FAIL vs Symbols
+        const displayName = item.id === null ? "💀" : item.id;
+        const displayColor = item.id === null ? "#666666" : (symbolColors[item.id] || "#ffffff");
+
+        const oddsItem = document.createElement('div');
+        oddsItem.className = 'odds-item';
+        oddsItem.style.borderLeft = `4px solid ${displayColor}`;
+        if (item.id === null) oddsItem.style.opacity = "0.6";
+
+        oddsItem.innerHTML = `
+            <div class="odds-symbol">${displayName}</div>
+            <div class="odds-percentage" style="color: ${isBuffed ? '#4ecca3' : '#ffffff'}">
+                ${percentage}%
+            </div>
+        `;
+        oddsContainer.appendChild(oddsItem);
+    });
+
+    // 5. Update Buff Icons
+    const buffsContainer = document.getElementById('buffs');
+    buffsContainer.innerHTML = '';
+    if (activeItems.luck) buffsContainer.innerHTML += '<div class="buff"><i class="fas fa-clover"></i> Luck</div>';
+    if (activeItems.double) buffsContainer.innerHTML += '<div class="buff"><i class="fas fa-bolt"></i> x2</div>';
+    if (activeItems.magnet) buffsContainer.innerHTML += '<div class="buff"><i class="fas fa-gem"></i> Magnet</div>';
+
+    // 6. Button state
+    const spinBtn = document.getElementById('spin-btn');
+    spinBtn.disabled = spinsLeft <= 0;
+}
+        
+        function determineOutcome() {
+    let table = JSON.parse(JSON.stringify(baseTable));
+    
+    if (activeItems.luck) {
+        let lossItem = table.find(i => i.id === null);
+        let reduction = Math.min(lossItem.prob - 5, 25); 
+        lossItem.prob -= reduction;
+        table.find(i => i.id === '🍒').prob += reduction; 
+    }
+    if (activeItems.magnet) {
+        table.find(i => i.id === '7️⃣').prob *= 5;
+        table.find(i => i.id === '⭐').prob *= 5;
+    }
+
+    const totalWeight = table.reduce((sum, item) => sum + item.prob, 0);
+    const rand = Math.random() * totalWeight; 
+    
+    let cumulative = 0;
+    for (let win of table) {
+        cumulative += win.prob;
+        if (rand < cumulative) return win;
+    }
+    return table[table.length-1];
+}
+        
+        // Generate a loss combination
+        function generateLoss() {
+            let res;
+            do {
+                res = [
+                    symbols[Math.floor(Math.random()*5)], 
+                    symbols[Math.floor(Math.random()*5)], 
+                    symbols[Math.floor(Math.random()*5)]
+                ];
+            } while (res[0] === res[1] && res[1] === res[2]);
+            return res;
+        }
+        
+        // Spin the reels
+        function play() {
+            if (spinsLeft <= 0) return;
+            
+            const spinBtn = document.getElementById('spin-btn');
+            const machineBox = document.getElementById('machine-box');
+            
+            spinsLeft--;
+            updateUI();
+            spinBtn.disabled = true;
+            machineBox.classList.remove('win-flash');
+            
+            // Determine outcome
+            const outcome = determineOutcome();
+            let reelResults = outcome.id ? 
+                [outcome.id, outcome.id, outcome.id] : 
+                generateLoss();
+            
+            // Animate reels
+            document.querySelectorAll(".strip").forEach((strip, i) => {
+                strip.style.transition = 'none';
+                strip.style.transform = `translateY(0px)`;
+                strip.offsetHeight; // Force reflow
+                
+                // Set the last symbol to our result
+                const stripSymbols = strip.querySelectorAll('.symbol');
+                stripSymbols[stripSymbols.length - 1].innerText = reelResults[i];
+                stripSymbols[stripSymbols.length - 1].style.color = symbolColors[reelResults[i]] || "#ffffff";
+                
+                // Slide down to that last symbol
+                const travel = (stripSymbols.length - 1) * 120;
+                strip.style.transition = `transform ${1.5 + i * 0.4}s cubic-bezier(0.45, 0.05, 0.55, 0.95)`;
+                strip.style.transform = `translateY(-${travel}px)`;
+            });
+            
+            // After animation finishes
+            setTimeout(() => {
+                if (outcome.id) {
+                    let win = outcome.val;
+                    if (activeItems.double) win *= 2;
+                    score += win;
+                    machineBox.classList.add('win-flash');
+                    
+                    // Show win notification
+                    showNotification(`You won ${win} points!`, 'success');
+                } else {
+                    showNotification('No win this time. Try again!', 'info');
+                }
+                
+                spinBtn.disabled = false;
+                updateUI();
+                
+                if (spinsLeft === 0) {
+                    setTimeout(openShop, 1500);
+                }
+            }, 2500);
+        }
+        
+        // Show notification
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            // Style the notification
+            notification.style.cssText = `
+                position: fixed;
+                top: 30px;
+                right: 30px;
+                background: ${type === 'success' ? 'rgba(78, 204, 163, 0.9)' : 'rgba(0, 212, 255, 0.9)'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-weight: 600;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 10000;
+                transform: translateX(150%);
+                transition: transform 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(150%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Open the magic shop
+        function openShop() {
+			document.getElementById('shop-score-val').innerText = score;
+            updateShopButtons();
+            document.getElementById('shop').style.display = 'flex';
+			updateUI();
+        }
+        
+        // Buy an item from the shop
+        function buyItem(type, cost) {
+			if (activeItems[type] === true) return;
+			
+			if (score >= cost) {
+				score -= cost;
+				activeItems[type] = true;
+				
+				// Update both score displays
+				document.getElementById('shop-score-val').innerText = score;
+				document.getElementById('score').innerText = score;
+				
+				updateShopButtons();
+				updateUI(); // This refreshes the "Live Win Chances" and "Buff Icons" immediately
+				
+				const itemCard = document.getElementById(`item-${type}`);
+				itemCard.classList.add('owned');
+				
+				showNotification(`${type.toUpperCase()} purchased!`, 'success');
+			} else {
+				showNotification('Not enough points!', 'info');
+			}
+		}
+        
+        // Update shop buttons
+        function updateShopButtons() {
+            const items = ['luck', 'double', 'magnet'];
+            
+            items.forEach(type => {
+                const btn = document.getElementById(`btn-${type}`);
+                if (!btn) return;
+                
+                if (activeItems[type] === true) {
+                    btn.disabled = true;
+                    btn.innerText = "PURCHASED";
+                    btn.classList.add('owned');
+                } else {
+                    btn.disabled = false;
+                    const prices = { luck: 50, double: 100, magnet: 150 };
+                    btn.innerText = `PURCHASE - ${prices[type]} PTS`;
+                    btn.classList.remove('owned');
+                }
+            });
+        }
+        
+        // Start the next round
+        function nextRound() {
+            round++;
+            spinsLeft = 10;
+            
+                    
+            document.getElementById('shop').style.display = 'none';
+            updateUI();
+            initReels();
+            
+            showNotification(`Round ${round} started! Good luck!`, 'success');
+        }
+        
+        // Cheat code activation
+        let cheatBuffer = "";
+        window.addEventListener('keydown', (e) => {
+            cheatBuffer += e.key;
+            if (cheatBuffer.length > 3) {
+                cheatBuffer = cheatBuffer.substring(cheatBuffer.length - 3);
+            }
+            
+            if (cheatBuffer === "999") {
+                activateCheat();
+            }
+        });
+        
+        function activateCheat() {
+            score = 999;
+            spinsLeft = 1;
+            
+            updateUI();
+            
+            if (document.getElementById('shop-score-val')) {
+                document.getElementById('shop-score-val').innerText = score;
+            }
+            
+            showNotification('CHEAT ACTIVATED!', 'success');
+            
+            // Visual effect
+            document.body.style.backgroundColor = "#2d0000";
+            setTimeout(() => {
+                document.body.style.backgroundColor = "";
+            }, 500);
+        }
+        
+        // Initialize the game
+        window.onload = function() {
+            createStars();
+            initReels();
+            updateUI();
+            
+            // Add event listener to spin button
+            document.getElementById('spin-btn').addEventListener('click', play);
+        };
+    </script>
 </body>
 </html>
