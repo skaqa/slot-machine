@@ -2,19 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Slot Machine ver.A</title>
+<title>Slot Machine with Scoring</title>
 <style>
-  body { background: #222; display: flex; flex-direction: column; align-items: center; padding-top: 50px; }
+  body { 
+    background: #222; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    font-family: 'Segoe UI', sans-serif;
+    color: white;
+  }
   
-  .machine { display: flex; gap: 10px; margin-bottom: 20px; }
+  .scoreboard { margin-top: 20px; font-size: 24px; color: gold; }
+  .status { height: 30px; margin: 10px; font-weight: bold; color: #00ff00; }
+
+  .machine { display: flex; gap: 15px; margin-bottom: 20px; background: #444; padding: 20px; border-radius: 20px; border: 4px solid #666; }
   
   .reel {
     width: 100px; 
-    height: 100px; /* One symbol visible at a time */
-    border: 5px solid #444;
+    height: 100px; 
+    border: 3px solid #222;
     background: #000; 
-    color: gold; 
-    overflow: hidden; /* Hides the other symbols */
+    overflow: hidden; 
     position: relative;
     font-size: 60px;
     border-radius: 10px;
@@ -24,48 +33,68 @@
     position: absolute;
     width: 100%;
     display: flex;
-    flex-direction: column; /* Stacks emojis vertically */
+    flex-direction: column;
     align-items: center;
-    transition: transform 3s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+    /* Transition is set in JS */
   }
 
   .symbol {
-    height: 100px; /* Must match .reel height */
+    height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   button {
-    padding: 10px 30px;
-    font-size: 20px;
+    padding: 15px 40px;
+    font-size: 24px;
     cursor: pointer;
     background: gold;
     border: none;
     font-weight: bold;
-    border-radius: 5px;
+    border-radius: 50px;
+    box-shadow: 0 4px #b8860b;
   }
+  button:active { transform: translateY(2px); box-shadow: 0 2px #b8860b; }
+  button:disabled { background: #666; box-shadow: none; cursor: not-allowed; }
 </style>
 </head>
 <body>
 
+<div class="scoreboard">Total Score: <span id="total-score">0</span></div>
+<div class="status" id="status-msg"></div>
+
 <div class="machine">
-  <!-- We repeat the symbols to create the "scrolling" illusion -->
   <div class="reel"><div class="strip" id="r1"></div></div>
   <div class="reel"><div class="strip" id="r2"></div></div>
   <div class="reel"><div class="strip" id="r3"></div></div>
 </div>
 
-<button onclick="spin()">SPIN</button>
+<button id="spin-btn" onclick="spin()">SPIN</button>
 
 <script>
-const symbols = ["🍒", "🍋", "🔔", "7", "BAR"];
-const symbolHeight = 100; // Match the CSS height
+// 1. Configuration
+const symbols = ["🍒", "🍋", "🔔", "7️⃣", "⭐"];
+const symbolScores = {
+  "🍒": 10,
+  "🍋": 20,
+  "🔔": 50,
+  "7️⃣": 100,
+  "⭐": 500
+};
 
-// Initialize the strips with symbols
+const symbolHeight = 100;
+const totalScoreElem = document.getElementById('total-score');
+const statusElem = document.getElementById('status-msg');
+const spinBtn = document.getElementById('spin-btn');
+let totalScore = 0;
+
+// 2. Setup Reels
 document.querySelectorAll(".strip").forEach(strip => {
-  // Add symbols multiple times to allow for long scrolling
-  const content = [...symbols, ...symbols, ...symbols, ...symbols, ...symbols];
+  // Create a long strip (repeat symbols 10 times for a long spin)
+  const content = [];
+  for(let i=0; i<10; i++) content.push(...symbols);
+  
   content.forEach(s => {
     const div = document.createElement('div');
     div.className = 'symbol';
@@ -75,24 +104,59 @@ document.querySelectorAll(".strip").forEach(strip => {
 });
 
 function spin() {
+  // Disable button and clear status
+  spinBtn.disabled = true;
+  statusElem.innerText = "";
+  
+  const results = [];
+
   document.querySelectorAll(".strip").forEach((strip, i) => {
-    // Reset position instantly before spinning again
+    // Reset position instantly
     strip.style.transition = 'none';
     strip.style.transform = `translateY(0px)`;
-    
-    // Force a reflow to make the reset instant
-    strip.offsetHeight; 
+    strip.offsetHeight; // Force reflow
 
-    // Calculate a random landing spot
-    // Pick a random index between 0 and 4
+    // Pick a random landing index (0 to 4)
     const landingIndex = Math.floor(Math.random() * symbols.length);
-    
-    // Move at least 3 full rotations (15 symbols) + the landing index
-    const totalMove = (15 + landingIndex) * symbolHeight;
+    const landingSymbol = symbols[landingIndex];
+    results.push(landingSymbol);
 
-    strip.style.transition = `transform ${2 + i * 0.5}s cubic-bezier(0.25, 0.1, 0.25, 1)`;
+    // Calculate move: (Move 5 full sets + the target)
+    const rotations = 5 + i; // Each reel spins a bit longer than the previous
+    const totalMove = (rotations * symbols.length + landingIndex) * symbolHeight;
+
+    strip.style.transition = `transform ${2 + i * 0.5}s cubic-bezier(0.45, 0.05, 0.55, 0.95)`;
     strip.style.transform = `translateY(-${totalMove}px)`;
   });
+
+  // 3. Logic Check (Wait for the longest animation to finish)
+  const longestAnimationTime = (2 + (2 * 0.5)) * 1000; 
+
+  setTimeout(() => {
+    checkWin(results);
+    spinBtn.disabled = false;
+  }, longestAnimationTime);
+}
+
+function checkWin(results) {
+  const [r1, r2, r3] = results;
+
+  if (r1 === r2 && r2 === r3) {
+    const winAmount = symbolScores[r1];
+    totalScore += winAmount;
+    
+    // Update UI
+    statusElem.innerText = `JACKPOT! You won ${winAmount} points! 🎊`;
+    statusElem.style.color = "gold";
+    totalScoreElem.innerText = totalScore;
+    
+    // Optional: Visual feedback
+    document.querySelector('.machine').style.borderColor = "gold";
+    setTimeout(() => document.querySelector('.machine').style.borderColor = "#666", 1000);
+  } else {
+    statusElem.innerText = "Try Again!";
+    statusElem.style.color = "#ff4444";
+  }
 }
 </script>
 
