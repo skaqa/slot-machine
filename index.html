@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Slot Machine with Scoring</title>
+<title>Slot Machine - Probability Weighted</title>
 <style>
   body { 
     background: #222; 
@@ -14,9 +14,9 @@
   }
   
   .scoreboard { margin-top: 20px; font-size: 24px; color: gold; }
-  .status { height: 30px; margin: 10px; font-weight: bold; color: #00ff00; }
+  .status { height: 30px; margin: 10px; font-weight: bold; }
 
-  .machine { display: flex; gap: 15px; margin-bottom: 20px; background: #444; padding: 20px; border-radius: 20px; border: 4px solid #666; }
+  .machine { display: flex; gap: 15px; margin-bottom: 20px; background: #444; padding: 20px; border-radius: 20px; border: 4px solid #666; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
   
   .reel {
     width: 100px; 
@@ -35,7 +35,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Transition is set in JS */
   }
 
   .symbol {
@@ -49,20 +48,22 @@
     padding: 15px 40px;
     font-size: 24px;
     cursor: pointer;
-    background: gold;
+    background: #ff4757;
+    color: white;
     border: none;
     font-weight: bold;
     border-radius: 50px;
-    box-shadow: 0 4px #b8860b;
+    box-shadow: 0 4px #c0392b;
+    text-transform: uppercase;
   }
-  button:active { transform: translateY(2px); box-shadow: 0 2px #b8860b; }
+  button:active { transform: translateY(2px); box-shadow: 0 2px #c0392b; }
   button:disabled { background: #666; box-shadow: none; cursor: not-allowed; }
 </style>
 </head>
 <body>
 
-<div class="scoreboard">Total Score: <span id="total-score">0</span></div>
-<div class="status" id="status-msg"></div>
+<div class="scoreboard">Points: <span id="total-score">0</span></div>
+<div class="status" id="status-msg">Try your luck!</div>
 
 <div class="machine">
   <div class="reel"><div class="strip" id="r1"></div></div>
@@ -73,27 +74,23 @@
 <button id="spin-btn" onclick="spin()">SPIN</button>
 
 <script>
-// 1. Configuration
-const symbols = ["🍒", "🍋", "🔔", "7️⃣", "⭐"];
-const symbolScores = {
-  "🍒": 10,
-  "🍋": 20,
-  "🔔": 50,
-  "7️⃣": 100,
-  "⭐": 500
-};
+// 1. Symbol Configuration
+// We define unique symbols and their scores
+const symbolData = [
+  { img: "🍒", score: 10,  weight: 40 }, // Most common (40% chance)
+  { img: "🍋", score: 20,  weight: 25 }, // 25% chance
+  { img: "🔔", score: 50,  weight: 15 }, // 15% chance
+  { img: "7️⃣", score: 100, weight: 12 }, // 12% chance
+  { img: "⭐", score: 500, weight: 8 }   // Rarest (8% chance)
+];
 
-const symbolHeight = 100;
-const totalScoreElem = document.getElementById('total-score');
-const statusElem = document.getElementById('status-msg');
-const spinBtn = document.getElementById('spin-btn');
-let totalScore = 0;
+// Create a flat array of unique symbols for UI generation
+const uniqueSymbols = symbolData.map(s => s.img);
 
-// 2. Setup Reels
+// 2. Setup Reels (Visuals)
 document.querySelectorAll(".strip").forEach(strip => {
-  // Create a long strip (repeat symbols 10 times for a long spin)
   const content = [];
-  for(let i=0; i<10; i++) content.push(...symbols);
+  for(let i=0; i<15; i++) content.push(...uniqueSymbols); // Repeat for long scrolling
   
   content.forEach(s => {
     const div = document.createElement('div');
@@ -103,10 +100,28 @@ document.querySelectorAll(".strip").forEach(strip => {
   });
 });
 
+let totalScore = 0;
+const symbolHeight = 100;
+
+// 3. Weighted Random Function
+function getWeightedRandomSymbol() {
+  // Calculate total weight (100 in this case)
+  const totalWeight = symbolData.reduce((sum, s) => sum + s.weight, 0);
+  let random = Math.random() * totalWeight;
+  
+  for (const s of symbolData) {
+    if (random < s.weight) return s;
+    random -= s.weight;
+  }
+}
+
 function spin() {
-  // Disable button and clear status
+  const spinBtn = document.getElementById('spin-btn');
+  const statusElem = document.getElementById('status-msg');
+  
   spinBtn.disabled = true;
-  statusElem.innerText = "";
+  statusElem.innerText = "Spinning...";
+  statusElem.style.color = "white";
   
   const results = [];
 
@@ -114,48 +129,48 @@ function spin() {
     // Reset position instantly
     strip.style.transition = 'none';
     strip.style.transform = `translateY(0px)`;
-    strip.offsetHeight; // Force reflow
+    strip.offsetHeight; 
 
-    // Pick a random landing index (0 to 4)
-    const landingIndex = Math.floor(Math.random() * symbols.length);
-    const landingSymbol = symbols[landingIndex];
-    results.push(landingSymbol);
+    // CHOOSE RESULT BASED ON WEIGHT
+    const selected = getWeightedRandomSymbol();
+    results.push(selected);
 
-    // Calculate move: (Move 5 full sets + the target)
-    const rotations = 5 + i; // Each reel spins a bit longer than the previous
-    const totalMove = (rotations * symbols.length + landingIndex) * symbolHeight;
+    // Find where that symbol lives in the unique list to stop the reel there
+    const landingIndex = uniqueSymbols.indexOf(selected.img);
+    
+    // Animate: (Spin through many sets + land on index)
+    const extraRotations = 10 + (i * 2); 
+    const totalMove = (extraRotations * uniqueSymbols.length + landingIndex) * symbolHeight;
 
-    strip.style.transition = `transform ${2 + i * 0.5}s cubic-bezier(0.45, 0.05, 0.55, 0.95)`;
+    strip.style.transition = `transform ${3 + i * 0.5}s cubic-bezier(0.15, 0, 0.15, 1)`;
     strip.style.transform = `translateY(-${totalMove}px)`;
   });
 
-  // 3. Logic Check (Wait for the longest animation to finish)
-  const longestAnimationTime = (2 + (2 * 0.5)) * 1000; 
-
+  // Check results after last reel stops
   setTimeout(() => {
     checkWin(results);
     spinBtn.disabled = false;
-  }, longestAnimationTime);
+  }, 4000);
 }
 
 function checkWin(results) {
-  const [r1, r2, r3] = results;
+  const statusElem = document.getElementById('status-msg');
+  const scoreElem = document.getElementById('total-score');
+  
+  const r1 = results[0].img;
+  const r2 = results[1].img;
+  const r3 = results[2].img;
 
   if (r1 === r2 && r2 === r3) {
-    const winAmount = symbolScores[r1];
+    const winAmount = results[0].score;
     totalScore += winAmount;
     
-    // Update UI
-    statusElem.innerText = `JACKPOT! You won ${winAmount} points! 🎊`;
+    statusElem.innerText = `JACKPOT! ${r1} matched! +${winAmount} pts`;
     statusElem.style.color = "gold";
-    totalScoreElem.innerText = totalScore;
-    
-    // Optional: Visual feedback
-    document.querySelector('.machine').style.borderColor = "gold";
-    setTimeout(() => document.querySelector('.machine').style.borderColor = "#666", 1000);
+    scoreElem.innerText = totalScore;
   } else {
-    statusElem.innerText = "Try Again!";
-    statusElem.style.color = "#ff4444";
+    statusElem.innerText = "No match, try again!";
+    statusElem.style.color = "#888";
   }
 }
 </script>
