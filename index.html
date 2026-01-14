@@ -4,42 +4,94 @@
 <meta charset="UTF-8">
 <title>Slot Machine</title>
 <style>
-  .machine { display: flex; gap: 10px; font-size: 80px; font-family: monospace; }
+  body { background: #222; display: flex; flex-direction: column; align-items: center; padding-top: 50px; }
+  
+  .machine { display: flex; gap: 10px; margin-bottom: 20px; }
+  
   .reel {
-    width: 120px; height: 120px; border: 5px solid #444;
-    background: #000; color: gold; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
+    width: 100px; 
+    height: 100px; /* One symbol visible at a time */
+    border: 5px solid #444;
+    background: #000; 
+    color: gold; 
+    overflow: hidden; /* Hides the other symbols */
     position: relative;
+    font-size: 60px;
+    border-radius: 10px;
   }
+
   .strip {
     position: absolute;
-    transition: transform 3s ease-out;
+    width: 100%;
+    display: flex;
+    flex-direction: column; /* Stacks emojis vertically */
+    align-items: center;
+    transition: transform 3s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  }
+
+  .symbol {
+    height: 100px; /* Must match .reel height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  button {
+    padding: 10px 30px;
+    font-size: 20px;
+    cursor: pointer;
+    background: gold;
+    border: none;
+    font-weight: bold;
+    border-radius: 5px;
   }
 </style>
 </head>
 <body>
 
 <div class="machine">
-  <div class="reel"><div class="strip" id="r1">🍒🍋🔔7BAR🍒🍋🔔7BAR</div></div>
-  <div class="reel"><div class="strip" id="r2">🍒🍋🔔7BAR🍒🍋🔔7BAR</div></div>
-  <div class="reel"><div class="strip" id="r3">🍒🍋🔔7BAR🍒🍋🔔7BAR</div></div>
+  <!-- We repeat the symbols to create the "scrolling" illusion -->
+  <div class="reel"><div class="strip" id="r1"></div></div>
+  <div class="reel"><div class="strip" id="r2"></div></div>
+  <div class="reel"><div class="strip" id="r3"></div></div>
 </div>
 
 <button onclick="spin()">SPIN</button>
 
 <script>
+const symbols = ["🍒", "🍋", "🔔", "7", "BAR"];
+const symbolHeight = 100; // Match the CSS height
+
+// Initialize the strips with symbols
+document.querySelectorAll(".strip").forEach(strip => {
+  // Add symbols multiple times to allow for long scrolling
+  const content = [...symbols, ...symbols, ...symbols, ...symbols, ...symbols];
+  content.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'symbol';
+    div.innerText = s;
+    strip.appendChild(div);
+  });
+});
+
 function spin() {
-  const symbols = "🍒🍋🔔7BAR";
   document.querySelectorAll(".strip").forEach((strip, i) => {
-    const randomPos = Math.floor(Math.random() * 200 + 100); // big random travel
-    strip.style.transition = `transform ${2 + i*0.4}s ease-out`;
-    strip.style.transform = `translateY(-${randomPos}%)`;
+    // Reset position instantly before spinning again
+    strip.style.transition = 'none';
+    strip.style.transform = `translateY(0px)`;
     
-    // fake stop + slight overshoot realism
-    setTimeout(() => {
-      strip.style.transition = "transform 0.6s cubic-bezier(0.17,0.89,0.45,1.58)";
-      strip.style.transform = `translateY(-${randomPos + (i%2?-8:8)}%)`;
-    }, 1800 + i*400);
+    // Force a reflow to make the reset instant
+    strip.offsetHeight; 
+
+    // Calculate a random landing spot
+    // Pick a random index between 0 and 4
+    const landingIndex = Math.floor(Math.random() * symbols.length);
+    
+    // Move at least 3 full rotations (15 symbols) + the landing index
+    const totalMove = (15 + landingIndex) * symbolHeight;
+
+    strip.style.transition = `transform ${2 + i * 0.5}s cubic-bezier(0.25, 0.1, 0.25, 1)`;
+    strip.style.transform = `translateY(-${totalMove}px)`;
   });
 }
 </script>
