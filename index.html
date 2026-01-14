@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slot Machine</title>
+<style>
+  .machine { display: flex; gap: 10px; font-size: 80px; font-family: monospace; }
+  .reel {
+    width: 120px; height: 120px; border: 5px solid #444;
+    background: #000; color: gold; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .strip {
+    position: absolute;
+    transition: transform 3s ease-out;
+  }
+</style>
+</head>
+<body>
+
+<div class="machine">
+  <div class="reel"><div class="strip" id="r1">🍒🍋🔔7BAR🍒🍋🔔7BAR</div></div>
+  <div class="reel"><div class="strip" id="r2">🍒🍋🔔7BAR🍒🍋🔔7BAR</div></div>
+  <div class="reel"><div class="strip" id="r3">🍒🍋🔔7BAR🍒🍋🔔7BAR</div></div>
+</div>
+
+<button onclick="spin()">SPIN</button>
+
+<script>
+function spin() {
+  const symbols = "🍒🍋🔔7BAR";
+  document.querySelectorAll(".strip").forEach((strip, i) => {
+    const randomPos = Math.floor(Math.random() * 200 + 100); // big random travel
+    strip.style.transition = `transform ${2 + i*0.4}s ease-out`;
+    strip.style.transform = `translateY(-${randomPos}%)`;
+    
+    // fake stop + slight overshoot realism
+    setTimeout(() => {
+      strip.style.transition = "transform 0.6s cubic-bezier(0.17,0.89,0.45,1.58)";
+      strip.style.transform = `translateY(-${randomPos + (i%2?-8:8)}%)`;
+    }, 1800 + i*400);
+  });
+}
+</script>
+
+</body>
+</html>
